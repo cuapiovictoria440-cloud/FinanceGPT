@@ -1,0 +1,78 @@
+# FinanceGPT Quick Start Docker Compose
+# 
+# Usage:
+#   ./run.sh              # Easiest way - uses this file automatically
+#   ./run.sh start        # Start FinanceGPT
+#   ./run.sh logs         # View logs
+#   ./run.sh stop         # Stop FinanceGPT
+#
+# Or manually:
+#   docker compose -f docker-compose.quickstart.yml up -d
+#
+# Configuration:
+#   Copy .env.example to .env and customize as needed.
+#   All settings have sensible defaults - no .env required for basic usage.
+
+services:
+  financegpt:
+    image: ghcr.io/manojag115/financegpt:latest
+    container_name: financegpt
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+      - "${BACKEND_PORT:-8000}:8000"
+      - "${ELECTRIC_PORT:-5133}:5133"
+    volumes:
+      - financegpt-data:/data
+    environment:
+      # === Authentication ===
+      - SECRET_KEY=${SECRET_KEY:-}
+      - AUTH_TYPE=${AUTH_TYPE:-LOCAL}
+      - REGISTRATION_ENABLED=${REGISTRATION_ENABLED:-TRUE}
+      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
+      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      
+      # === Financial Data (Plaid) ===
+      - PLAID_CLIENT_ID=${PLAID_CLIENT_ID:-}
+      - PLAID_SECRET=${PLAID_SECRET:-}
+      - PLAID_ENV=${PLAID_ENV:-sandbox}
+      
+      # === AI/ML ===
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      - RERANKERS_ENABLED=${RERANKERS_ENABLED:-FALSE}
+      - RERANKERS_MODEL_NAME=${RERANKERS_MODEL_NAME:-}
+      - RERANKERS_MODEL_TYPE=${RERANKERS_MODEL_TYPE:-}
+      
+      # === Document Processing ===
+      - ETL_SERVICE=${ETL_SERVICE:-UNSTRUCTURED}
+      - UNSTRUCTURED_API_KEY=${UNSTRUCTURED_API_KEY:-}
+      - LLAMA_CLOUD_API_KEY=${LLAMA_CLOUD_API_KEY:-}
+      - PAGES_LIMIT=${PAGES_LIMIT:-999999999}
+      
+      # === Voice Services ===
+      - TTS_SERVICE=${TTS_SERVICE:-local/kokoro}
+      - TTS_SERVICE_API_KEY=${TTS_SERVICE_API_KEY:-}
+      - STT_SERVICE=${STT_SERVICE:-local/base}
+      - STT_SERVICE_API_KEY=${STT_SERVICE_API_KEY:-}
+      
+      # === Web Crawling ===
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY:-}
+      
+      # === Scheduler ===
+      - SCHEDULE_CHECKER_INTERVAL=${SCHEDULE_CHECKER_INTERVAL:-5m}
+      
+      # === Observability (Optional) ===
+      - LANGSMITH_TRACING=${LANGSMITH_TRACING:-false}
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
+      - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  financegpt-data:
+    name: financegpt-data
+
